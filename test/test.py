@@ -26,19 +26,20 @@ async def start(dut):
 
 
 async def command(dut, cmd, value=0, byte_sel=0):
+    # byte_sel may also carry the bank select (bit 1) for a set address command
     dut.ui_in.value = (cmd << 6) | byte_sel
     dut.uio_in.value = value
     await ClockCycles(dut.clk, 1)
 
 
-async def write_word(dut, addr, word):
-    await command(dut, CMD_ADDR, addr)
+async def write_word(dut, addr, word, bank=0):
+    await command(dut, CMD_ADDR, addr, bank << 1)
     await command(dut, CMD_WRITE_LO, word & 0xFF)
     await command(dut, CMD_WRITE_HI, word >> 8)
 
 
-async def read_word(dut, addr):
-    await command(dut, CMD_ADDR, addr)
+async def read_word(dut, addr, bank=0):
+    await command(dut, CMD_ADDR, addr, bank << 1)
     # The word is on uo_out after the third rising edge of clk, counting the one
     # that samples the set address command (see project.v). cocotb sees the values
     # from before the edge it just awaited, so wait for one edge more.
@@ -103,3 +104,19 @@ async def test_writes_ignored_during_reset(dut):
     assert await read_word(dut, 0xAA) == 0x5678
     # The address register resets to 0, so an ungated write would land there
     assert await read_word(dut, 0x00) == 0x0123
+
+
+@cocotb.test()
+async def test_two_banks(dut):
+    await start(dut)
+    random.seed(2)
+    w0 = random.sample(range(0x10000), 256)
+    w1 = random.sample(range(0x10000), 256)
+    for addr in range(256):
+        await write_word(dut, addr, w0[addr], bank=0)
+        await write_word(dut, addr, w1[addr], bank=1)
+    for addr in range(256):
+        got0 = await read_word(dut, addr, bank=0)
+        got1 = await read_word(dut, addr, bank=1)
+        assert got0 == w0[addr], f"bank 0 address {addr:#04x}: read {got0:#06x}, expected {w0[addr]:#06x}"
+        assert got1 == w1[addr], f"bank 1 address {addr:#04x}: read {got1:#06x}, expected {w1[addr]:#06x}"
