@@ -45,7 +45,8 @@
   "MACROS": {
     "RM_IHPSG13_1P_256x16_c2_bm_bist": {
       "instances": {
-        "sram": { "location": [3.36, 3.78], "orientation": "FS" }
+        "sram0": { "location": [3.36, 3.78], "orientation": "FS" },
+        "sram1": { "location": [171.96, 173.88], "orientation": "N" }
       },
       "gds": ["pdk_dir::libs.ref/sg13cmos5l_sram/gds/RM_IHPSG13_1P_256x16_c2_bm_bist.gds"],
       "lef": ["pdk_dir::libs.ref/sg13cmos5l_sram/lef/RM_IHPSG13_1P_256x16_c2_bm_bist.lef"],
@@ -59,8 +60,10 @@
 
   "//": "The SRAM has two supply rails (VDD!, VDDARRAY!) and one ground rail (VSS!).",
   "PDN_MACRO_CONNECTIONS": [
-    "sram VPWR VGND VDD! VSS!",
-    "sram VPWR VGND VDDARRAY! VSS!"
+    "sram0 VPWR VGND VDD! VSS!",
+    "sram0 VPWR VGND VDDARRAY! VSS!",
+    "sram1 VPWR VGND VDD! VSS!",
+    "sram1 VPWR VGND VDDARRAY! VSS!"
   ],
 
   "//": "PDN: Skip connecting the SRAM by pdngen; it is powered by ExtendPowerStripes instead.",
